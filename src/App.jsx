@@ -21,7 +21,11 @@ function App() {
   const[temperature, setTemperature] = useState(null);
   const[humidity, setHumidity] = useState(null);
   const [windSpeed, setWindSpeed] = useState(0);
-  const previousAlert = useRef(false);
+  const previousAlert = useRef({
+  aqi: false,
+  pm25: false,
+  co2: false,
+});
 
 // Settings
   const [alertSound, setAlertSound] = useState(true);
@@ -130,30 +134,56 @@ useEffect(() => {
   const [pm25Status, setPm25Status] = useState("");
   const [co2Status, setCo2Status] = useState("");
 
-  const [history, setHistory] = useState([
-    {
-      time: "11:26:34 AM",
-      aqi: 42,
-      co2: 410,
-      pm25: 18
-    },
-    {
-      time: "11:26:44 AM",
-      aqi: 55,
-      co2: 450,
-      pm25: 22
-    },
-    {
-      time: "11:26:54 AM",
-      aqi: 48,
-      co2: 430,
-      pm25: 20
-    }
-  ]);
+  const [history, setHistory] = useState([]);
   const [lastUpdated, setLastUpdated] = useState("--");
   const [alerts, setAlerts] = useState([]);
+  useEffect(() => {
+  if (aqi !== undefined && co2 !== undefined && pm25 !== undefined) {
+    const newReading = {
+      time: new Date().toLocaleTimeString(),
+      aqi: aqi,
+      co2: co2,
+      pm25: pm25
+    };
+
+    setHistory((prev) => [newReading, ...prev].slice(0, 8));
+  }
+}, [aqi, co2, pm25]); 
   const [alertFilter, setAlertFilter] = useState("All");
   const [alertSearch, setAlertSearch] = useState("");
+  // Dynamic alerts based on live values
+useEffect(() => {
+  const newAlerts = [];
+
+  if (co2 > 800) {
+    newAlerts.push({
+      id: "co2-alert",
+      type: "CO₂",
+      message: "CO₂ level is above the safe limit",
+      time: "Just now"
+    });
+  }
+
+  if (pm25 > 35) {
+    newAlerts.push({
+      id: "pm25-alert",
+      type: "PM2.5",
+      message: "PM2.5 level is above the recommended limit",
+      time: "Just now"
+    });
+  }
+
+  if (aqi > 100) {
+    newAlerts.push({
+      id: "aqi-alert",
+      type: "AQI",
+      message: "Air quality is unhealthy",
+      time: "Just now"
+    });
+  }
+
+  setAlerts(newAlerts);
+}, [co2, pm25, aqi]);
   const [acknowledgedAlerts, setAcknowledgedAlerts] = useState([]);
 
   const getAqiStatus = (value) => {
